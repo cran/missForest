@@ -1,0 +1,101 @@
+
+R version 2.13.0 (2011-04-13)
+Copyright (C) 2011 The R Foundation for Statistical Computing
+ISBN 3-900051-07-0
+Platform: x86_64-unknown-linux-gnu (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> ## Test for argument compliance                         Author: D.Stekhoven
+> ## ========================================================================
+> ## Created: 13.05.2011                                  Package: missForest
+> library(missForest)
+Loading required package: randomForest
+randomForest 4.6-2
+Type rfNews() to see new features/changes/bug fixes.
+> data(esoph)
+> set.seed(107)
+> ## vanilla
+> esoph.mis <- prodNA(esoph, noNA = 0.1)
+> esoph.imp <- missForest(esoph.mis)
+  missForest iteration 1 in progress...done!
+  missForest iteration 2 in progress...done!
+  missForest iteration 3 in progress...done!
+  missForest iteration 4 in progress...done!
+> esoph.imp$OOBerror
+    NRMSE       PFC 
+0.5631915 0.7072257 
+> 
+> ## maxiter
+> esoph.imp <- missForest(esoph.mis, maxiter = 1)
+  missForest iteration 1 in progress...done!
+> esoph.imp$OOBerror
+    NRMSE       PFC 
+0.6804565 0.7449284 
+> 
+> ## decreasing
+> esoph.imp <- missForest(esoph.mis, decreasing = TRUE)
+  missForest iteration 1 in progress...done!
+  missForest iteration 2 in progress...done!
+  missForest iteration 3 in progress...done!
+  missForest iteration 4 in progress...done!
+  missForest iteration 5 in progress...done!
+  missForest iteration 6 in progress...done!
+  missForest iteration 7 in progress...done!
+> esoph.imp$OOBerror
+    NRMSE       PFC 
+0.5571914 0.6994448 
+> 
+> ## verbose not included due to inconsistent runtimes
+> 
+> ## mtry
+> esoph.imp <- missForest(esoph.mis, mtry = 55)
+  missForest iteration 1 in progress...done!
+  missForest iteration 2 in progress...done!
+  missForest iteration 3 in progress...done!
+  missForest iteration 4 in progress...done!
+  missForest iteration 5 in progress...done!
+  missForest iteration 6 in progress...done!
+  missForest iteration 7 in progress...done!
+  missForest iteration 8 in progress...done!
+> esoph.imp$OOBerror
+    NRMSE       PFC 
+0.5424190 0.6951116 
+> 
+> ## ntree
+> esoph.imp <- missForest(esoph.mis, ntree = 10)
+  missForest iteration 1 in progress...done!
+  missForest iteration 2 in progress...done!
+  missForest iteration 3 in progress...done!
+  missForest iteration 4 in progress...done!
+  missForest iteration 5 in progress...done!
+  missForest iteration 6 in progress...done!
+  missForest iteration 7 in progress...done!
+> esoph.imp$OOBerror
+    NRMSE       PFC 
+0.7734113 0.7257697 
+> 
+> ## xtrue
+> esoph.imp <- missForest(esoph.mis, xtrue = esoph)
+  missForest iteration 1 in progress...done!
+  missForest iteration 2 in progress...done!
+  missForest iteration 3 in progress...done!
+  missForest iteration 4 in progress...done!
+  missForest iteration 5 in progress...done!
+> esoph.imp$OOBerror
+    NRMSE       PFC 
+0.5577962 0.6773484 
+> esoph.imp$error
+    NRMSE       PFC 
+0.6880631 0.6896552 
+> 
