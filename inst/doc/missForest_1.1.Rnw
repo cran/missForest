@@ -157,14 +157,31 @@ iris.imp$OOBerror
 
 As mentioned before the Iris data set contains two types of variables,
 continuous and categorical. This is why the OOB imputation error supplies
-two values for the result of the imputation. The first value is the
-normalized root mean squared error (NRMSE, see \cite{oba03}) for the
-continuous part of the imputed data set, e.g., \texttt{Sepal.Length},
-\texttt{Sepal.Width}, \texttt{Petal.Length} and \texttt{Petal.Width}. The
-second value is the proportion of falsely classified entries (PFC) in the
-categorical part of the imputed data set, e.g., \texttt{Species}. In both
-cases good performance of \mF leads to a value around 1 and bad
-performance to a value close to 0.
+two values for the result of the imputation (default setting). The first
+value is the normalized root mean squared error (NRMSE, see \cite{oba03})
+for the continuous part of the imputed data set, e.g.,
+\texttt{Sepal.Length}, \texttt{Sepal.Width}, \texttt{Petal.Length} and
+\texttt{Petal.Width}. The second value is the proportion of falsely
+classified entries (PFC) in the categorical part of the imputed data set,
+e.g., \texttt{Species}. In both cases good performance of \mF leads to a
+value close to 0 and bad performance to a value around 1. 
+
+If you are interested in assessing the reliability of the imputation
+for single variables, e.g., to decide which variables to use in a
+subsequent data analysis, \mF can return the OOB errors for each variable
+separately instead of aggregating over the whole data matrix. This can be
+done using the argument \texttt{variablewise = TRUE} when calling the
+\texttt{missForest} function.
+
+<<irisOOBvarwise>>=
+iris.imp <- missForest(iris.mis, variablewise = TRUE)
+iris.imp$OOBerror
+@ 
+
+We can see that the output has the same length as there are variables in
+the data. For each variable the resulting error and the
+type of error measure, i.e., mean squared error (MSE) or PFC, is
+returned. Note that we are not using the NRMSE here.
 
 \subsection{Additional output using \texttt{verbose}}\label{verbose}
 In \ref{nutshell} the print-out of \mF showed only which iteration is
@@ -396,7 +413,7 @@ iris.imp <- missForest(iris.mis)
 <<irisStrategy2, echo = TRUE>>=
 iris.err <- mixError(iris.imp$ximp, iris.mis, iris)
 print(iris.err)
-@ 
+@
 
 {\it Note: We want to point out once more that the user has to extract the
   imputed matrix from the \mF output using the} \texttt{\$} {\it list

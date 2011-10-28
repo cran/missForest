@@ -10,8 +10,9 @@
   relations. It yields an out-of-bag (OOB) imputation error estimate.
 }
 \usage{
-missForest(xmis, maxiter = 10, decreasing = FALSE, verbose = FALSE,
-           mtry = floor(sqrt(ncol(xmis))), ntree = 100, xtrue = NA)
+missForest(xmis, maxiter = 10, variablewise = FALSE, decreasing = FALSE,
+           verbose = FALSE, mtry = floor(sqrt(ncol(xmis))), ntree = 100,
+           xtrue = NA)
 }
 \arguments{
   \item{xmis}{
@@ -21,6 +22,11 @@ missForest(xmis, maxiter = 10, decreasing = FALSE, verbose = FALSE,
   \item{maxiter}{
     maximum number of iterations to be performed given the stopping criterion
     is not met beforehand.
+  }
+  \item{variablewise}{
+    logical. If 'TRUE' the OOB error is returned for each variable
+    separately. This can be useful as a reliability check for the
+    imputed variables w.r.t. to a subsequent data analysis.
   }
   \item{decreasing}{
     logical. If 'FALSE' then the variables are sorted w.r.t. increasing
@@ -87,7 +93,10 @@ missForest(xmis, maxiter = 10, decreasing = FALSE, verbose = FALSE,
     estimated OOB imputation error. For the set of continuous
     variables in 'xmis' the NRMSE and for the set of categorical variables
     the proportion of falsely classified entries is returned. See Details
-    for the exact definition of these error measures.
+    for the exact definition of these error measures. If 'variablewise'
+    is set to 'TRUE' then this will be a vector of length 'p' where 'p' is
+    the number of variables and the entries will be the OOB error for each
+    variable separately.
   }
   \item{error}{
     true imputation error. This is only available if 'xtrue'
@@ -95,7 +104,8 @@ missForest(xmis, maxiter = 10, decreasing = FALSE, verbose = FALSE,
   }
 \references{
   Stekhoven, D.J. and Buehlmann, P. (2011), 'MissForest -
-  nonparametric missing value imputation for mixed-type data', Arxiv preprint arXiv:1105.0828
+  nonparametric missing value imputation for mixed-type data',
+  Bioinformatics, 2011, doi: 10.1093/bioinformatics/btr597
 }
 \author{
 Daniel J. Stekhoven, <stekhoven@stat.math.ethz.ch>

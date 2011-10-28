@@ -1,19 +1,19 @@
 This is BibTeX, Version 0.99c (TeX Live 2009)
-The top-level auxiliary file: missForest_1.0.aux
+The top-level auxiliary file: missForest_1.1.aux
 The style file: plainnat.bst
 Database file #1: myBib.bib
 You've used 8 entries,
             2773 wiz_defined-function locations,
-            647 strings with 5938 characters,
-and the built_in function-call counts, 3180 in all, are:
-= -- 275
+            647 strings with 5942 characters,
+and the built_in function-call counts, 3189 in all, are:
+= -- 277
 > -- 171
 < -- 7
 + -- 59
 - -- 51
 * -- 226
-:= -- 511
-add.period$ -- 28
+:= -- 513
+add.period$ -- 29
 call.type$ -- 8
 change.case$ -- 39
 chr.to.int$ -- 8
@@ -21,13 +21,13 @@ cite$ -- 16
 duplicate$ -- 154
 empty$ -- 272
 format.name$ -- 67
-if$ -- 663
+if$ -- 665
 int.to.chr$ -- 1
 int.to.str$ -- 1
 missing$ -- 9
-newline$ -- 52
+newline$ -- 53
 num.names$ -- 32
-pop$ -- 84
+pop$ -- 83
 preamble$ -- 1
 purify$ -- 33
 quote$ -- 0
@@ -42,4 +42,4 @@ type$ -- 78
 warning$ -- 0
 while$ -- 27
 width$ -- 0
-write$ -- 114
+write$ -- 116

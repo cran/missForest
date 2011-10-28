@@ -11,27 +11,38 @@
 
 
 missForest <- function(xmis, maxiter = 10,
+                       variablewise = FALSE,
                        decreasing = FALSE,
                        verbose = FALSE,
                        mtry = floor(sqrt(ncol(xmis))),
                        ntree = 100, xtrue = NA)
 { ## ----------------------------------------------------------------------
   ## Arguments:
-  ## xmis       = data matrix with missing values
-  ## maxiter    = stop after how many iterations (default = 10)
-  ## decreasing = (boolean) if TRUE the columns are sorted with decreasing
-  ##              amount of missing values
-  ## verbose    = (boolean) if TRUE then missForest returns error estimates,
-  ##              runtime and if available true error during iterations
-  ## mtry       = how many variables should be tried randomly at each node
-  ## ntree      = how many trees are grown in the forest
-  ## xtrue      = complete data matrix
+  ## xmis         = data matrix with missing values
+  ## maxiter      = stop after how many iterations (default = 10)
+  ## variablewise = return OOB errors for each variable separately
+  ## decreasing   = (boolean) if TRUE the columns are sorted with decreasing
+  ##                amount of missing values
+  ## verbose      = (boolean) if TRUE then missForest returns error estimates,
+  ##                runtime and if available true error during iterations
+  ## mtry         = how many variables should be tried randomly at each node
+  ## ntree        = how many trees are grown in the forest
+  ## xtrue        = complete data matrix
   ##
   ## ----------------------------------------------------------------------
   ## Author: Daniel Stekhoven, stekhoven@stat.math.ethz.ch
 
   n <- nrow(xmis)
   p <- ncol(xmis)
+
+  ## remove completely missing variables
+  if (any(apply(is.na(xmis), 2, sum) == n)){
+    indCmis <- which(apply(is.na(xmis), 2, sum) == n)
+    xmis <- xmis[,-indCmis]
+    p <- ncol(xmis)
+    cat('  removed variable(s)', indCmis,
+        'due to the missingness of all entries\n')
+  }  
   
   ## perform initial guess on xmis
   ximp <- xmis
@@ -167,21 +178,27 @@ missForest <- function(xmis, maxiter = 10,
     }
 
     ## compute estimated imputation error
-    NRMSE <- sqrt(mean(OOBerror[varType=='numeric'])/
-                  var(as.vector(as.matrix(xmis[,varType=='numeric'])),
-                      na.rm = TRUE))
-    PFC <- mean(OOBerror[varType=='factor'])
-    if (k==1){
-      if (unique(varType)=='numeric'){
-        OOBerr <- NRMSE
-        names(OOBerr) <- 'NRMSE'
+    if (!variablewise){
+      NRMSE <- sqrt(mean(OOBerror[varType=='numeric'])/
+                    var(as.vector(as.matrix(xmis[,varType=='numeric'])),
+                        na.rm = TRUE))
+      PFC <- mean(OOBerror[varType=='factor'])
+      if (k==1){
+        if (unique(varType)=='numeric'){
+          OOBerr <- NRMSE
+          names(OOBerr) <- 'NRMSE'
+        } else {
+          OOBerr <- PFC
+          names(OOBerr) <- 'PFC'
+        }
       } else {
-        OOBerr <- PFC
-        names(OOBerr) <- 'PFC'
+        OOBerr <- c(NRMSE, PFC)
+        names(OOBerr) <- c('NRMSE', 'PFC')
       }
     } else {
-      OOBerr <- c(NRMSE, PFC)
-      names(OOBerr) <- c('NRMSE', 'PFC')
+      OOBerr <- OOBerror
+      names(OOBerr)[varType=='numeric'] <- 'MSE'
+      names(OOBerr)[varType=='factor'] <- 'PFC'
     }
 
     if (any(!is.na(xtrue))){
