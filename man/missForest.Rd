@@ -102,11 +102,9 @@ missForest(xmis, maxiter = 10, variablewise = FALSE, decreasing = FALSE,
     true imputation error. This is only available if 'xtrue'
     was supplied. The error measures are the same as for 'OOBerror'.}
   }
-\references{
-  Stekhoven, D.J. and Buehlmann, P. (2011), 'MissForest -
+\references{Stekhoven, D.J. and Buehlmann, P. (2012), 'MissForest -
   nonparametric missing value imputation for mixed-type data',
-  Bioinformatics, 2011, doi: 10.1093/bioinformatics/btr597
-}
+  Bioinformatics, 28(1) 2012, 112-118, doi: 10.1093/bioinformatics/btr597}
 \author{
 Daniel J. Stekhoven, <stekhoven@stat.math.ethz.ch>
 }

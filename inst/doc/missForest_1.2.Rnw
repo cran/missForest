@@ -1,6 +1,7 @@
 %% missForest_1.0.Rnw created on 04.05.11
+%% missForest_1.2.Rnw updated on 20.02.12
 \documentclass[11pt]{article}
-%\VignetteIndexEntry{missForest_1.0.Rnw}
+%\VignetteIndexEntry{missForest_1.2.Rnw}
 %\VignetteDepends{randomForest}
 \usepackage[english]{babel}
 \usepackage{Sweave,graphicx,amsmath,amssymb,url}
@@ -14,7 +15,7 @@
     
 \title{Using the \texttt{missForest} Package}
 \author{Daniel J. Stekhoven\\stekhoven@stat.math.ethz.ch}
-\date{Friday, 13$^{\textrm{th}}$ of May, 2011}
+\date{Friday, 13$^{\textrm{th}}$ of May, 2011\\\small{Update: Version 1.2, 20.02.12}}
 \begin{document}
 \maketitle
 \SweaveOpts{engine=R, eps=FALSE, pdf=TRUE, width=5.33, height=3}
@@ -270,15 +271,15 @@ simply taking the sixth iteration and calls it a day? Because the
 difference in the continuous part of the data set is still reduced in each
 iteration up until iteration 9. This stopping strategy is on average
 (taking all possible data sets into account) quite good but can have its
-caveats at one specific data sets. In the above case of the \texttt{esoph}
-data we can get the result of the fourth iteration by doing the following:
+caveats at specific data sets. In the above case of the \texttt{esoph}
+data we can get the result of the sixth iteration by doing the following:
 
 <<maxiterEsoph, echo=TRUE>>=
 set.seed(96)
 esoph.imp <- missForest(esoph.mis, verbose = TRUE, maxiter = 6)
 @ 
 
-The returned result is now given by iteration 4. Quintessentially, there
+The returned result is now given by iteration 6. Quintessentially, there
 are two uses for the \texttt{maxiter} argument:
 \begin{enumerate}
   \item Controlling the run time in case of stagnating performance;

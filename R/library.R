@@ -4,8 +4,6 @@
 ## This R script contains the necessary functions for performing imputation
 ## using the missForest algorithm in the statistical software R.
 ##
-## An R package 'missForest' will be made available as soon as possible. 
-##
 ## Author: D.Stekhoven, stekhoven@stat.math.ethz.ch
 ##############################################################################
 
