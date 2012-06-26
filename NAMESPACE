@@ -1,5 +1,5 @@
-# Default NAMESPACE created by R
-# Remove the previous line if you edit this file
+# NAMESPACE for the R package 'missForest'
+# Created 2012-02-20 by D. Stekhoven
 
 # Export all names
 exportPattern(".")

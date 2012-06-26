@@ -14,8 +14,8 @@ Nonparametric Missing Value Imputation using Random Forest
 \tabular{ll}{
 Package: \tab missForest\cr
 Type: \tab Package\cr
-Version: \tab 1.0\cr
-Date: \tab 2011-05-13\cr
+Version: \tab 1.3\cr
+Date: \tab 2012-06-26\cr
 License: \tab GPL (>= 2)\cr
 LazyLoad: \tab yes\cr
 }

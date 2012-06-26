@@ -8,30 +8,49 @@
 ##############################################################################
 
 
-missForest <- function(xmis, maxiter = 10,
-                       variablewise = FALSE,
-                       decreasing = FALSE,
-                       verbose = FALSE,
-                       mtry = floor(sqrt(ncol(xmis))),
-                       ntree = 100, xtrue = NA)
+missForest <- function(xmis, maxiter = 10, ntree = 100, variablewise = FALSE,
+                       decreasing = FALSE, verbose = FALSE,
+                       mtry = floor(sqrt(ncol(xmis))), replace = TRUE,
+                       classwt = NULL, cutoff = NULL, strata = NULL,
+                       sampsize = NULL, nodesize = NULL, maxnodes = NULL,
+                       xtrue = NA)
 { ## ----------------------------------------------------------------------
   ## Arguments:
   ## xmis         = data matrix with missing values
   ## maxiter      = stop after how many iterations (default = 10)
+  ## ntree        = how many trees are grown in the forest
   ## variablewise = return OOB errors for each variable separately
   ## decreasing   = (boolean) if TRUE the columns are sorted with decreasing
   ##                amount of missing values
   ## verbose      = (boolean) if TRUE then missForest returns error estimates,
   ##                runtime and if available true error during iterations
   ## mtry         = how many variables should be tried randomly at each node
-  ## ntree        = how many trees are grown in the forest
+  ## replace      = (boolean) if TRUE bootstrap sampling (with replacements)
+  ##                is performed, else subsampling (without replacements)
+  ## classwt      = list of priors of the classes in the categorical variables
+  ## cutoff       = list of class cutoffs for each categorical variable
+  ## strata       = list of (factor) variables used for stratified sampling
+  ## sampsize     = list of size(s) of sample to draw
+  ## nodesize     = minimum size of terminal nodes, vector of length 2, with
+  ##                number for continuous variables in the first entry and
+  ##                number for categorical variables in the second entry
+  ## maxnodes     = maximum number of terminal nodes for individual trees
   ## xtrue        = complete data matrix
   ##
   ## ----------------------------------------------------------------------
   ## Author: Daniel Stekhoven, stekhoven@stat.math.ethz.ch
 
+  ## stop in case of wrong inputs passed to randomForest
   n <- nrow(xmis)
   p <- ncol(xmis)
+  if (!is.null(classwt))
+    stopifnot(length(classwt) == p, typeof(classwt) == 'list')
+  if (!is.null(cutoff))
+    stopifnot(length(cutoff) == p, typeof(cutoff) == 'list')
+  if (!is.null(strata))
+    stopifnot(length(strata) == p, typeof(strata) == 'list')
+  if (!is.null(nodesize))
+    stopifnot(length(nodesize) == 2)
 
   ## remove completely missing variables
   if (any(apply(is.na(xmis), 2, sum) == n)){
@@ -42,7 +61,7 @@ missForest <- function(xmis, maxiter = 10,
         'due to the missingness of all entries\n')
   }  
   
-  ## perform initial guess on xmis
+  ## perform initial guess on xmis (mean imputation)
   ximp <- xmis
   xAttrib <- lapply(xmis, attributes)
   varType <- character(p)
@@ -133,7 +152,16 @@ missForest <- function(xmis, maxiter = 10,
         typeY <- varType[varInd]
         if (typeY == 'numeric'){
           ## train random forest on observed data
-          RF <- randomForest(x = obsX, y = obsY, ntree = ntree)
+          RF <- randomForest(
+                  x = obsX,
+                  y = obsY,
+                  ntree = ntree,
+                  mtry = mtry,
+                  replace = replace,
+                  sampsize = if (!is.null(sampsize)) sampsize[[varInd]] else
+                    if (replace) nrow(obsX) else ceiling(0.632*nrow(obsX)),
+                  nodesize = if (!is.null(nodesize)) nodesize[1] else 1,
+                  maxnodes = if (!is.null(maxnodes)) maxnodes else NULL)
           ## record out-of-bag error
           OOBerror[varInd] <- RF$mse[ntree]
           ## predict missing values in column varInd
@@ -145,7 +173,21 @@ missForest <- function(xmis, maxiter = 10,
             misY <- factor(rep(names(summarY), sum(misi)))
           } else {
             ## train random forest on observed data
-            RF <- randomForest(x = obsX, y = obsY, ntree = ntree)
+            RF <- randomForest(
+                    x = obsX,
+                    y = obsY,
+                    ntree = ntree,
+                    mtry = mtry,
+                    replace = replace,
+                    classwt = if (!is.null(classwt)) classwt[[varInd]] else
+                              rep(1, nlevels(obsY)),
+                    cutoff = if (!is.null(cutoff)) cutoff[[varInd]] else
+                             rep(1/nlevels(obsY), nlevels(obsY)),
+                    strata = if (!is.null(strata)) strata[[varInd]] else obsY,
+                    sampsize = if (!is.null(sampsize)) sampsize[[varInd]] else
+                           if (replace) nrow(obsX) else ceiling(0.632*nrow(obsX)),
+                    nodesize = if (!is.null(nodesize)) nodesize[2] else 5,
+                    maxnodes = if (!is.null(maxnodes)) maxnodes else NULL)
             ## record out-of-bag error
             OOBerror[varInd] <- RF$err.rate[[ntree,1]]
             ## predict missing values in column varInd

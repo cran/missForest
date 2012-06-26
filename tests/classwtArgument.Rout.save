@@ -16,42 +16,40 @@ Type 'demo()' for some demos, 'help()' for on-line help, or
 'help.start()' for an HTML browser interface to help.
 Type 'q()' to quit R.
 
-> ## Test for handling missing classes after deletion     Author: D.Stekhoven
+> ## Test for using the classwt argument                  Author: D.Stekhoven
 > ## ========================================================================
-> ## Created: 13.05.2011                                  Package: missForest
+> ## Created: 22.06.2012                                  Package: missForest
 > library(missForest)
 Loading required package: randomForest
 randomForest 4.6-6
 Type rfNews() to see new features/changes/bug fixes.
-> set.seed(119)
-> X1 <- rep(c(4, 3, 2, 1), each = 25)
-> X2 <- rnorm(100, sd = X1)
-> X3 <- rnorm(100, sd = 2*X1)
-> X <- data.frame(bin = as.factor(X1), num1 = X2, num2 = X3)
-> X.mis <- prodNA(X, noNA = 0.01)
-> X.mis[1:25,1] <- NA
-> X.imp <- missForest(X.mis, xtrue = X)
+> dat <- data(iris)
+> set.seed(13)
+> xmis <- prodNA(iris)
+> ximp <- missForest(xmis, ntree = 100, classwt = list(NULL, NULL, NULL, NULL, c(10, 30, 10)))
   missForest iteration 1 in progress...done!
   missForest iteration 2 in progress...done!
   missForest iteration 3 in progress...done!
   missForest iteration 4 in progress...done!
   missForest iteration 5 in progress...done!
-  missForest iteration 6 in progress...done!
-> summary(X.imp$ximp)
- bin         num1               num2         
- 1:27   Min.   :-12.6438   Min.   :-19.6249  
- 2:28   1st Qu.: -1.8475   1st Qu.: -3.7132  
- 3:45   Median :  0.1284   Median : -0.6307  
- 4: 0   Mean   : -0.3995   Mean   : -0.6353  
-        3rd Qu.:  1.1034   3rd Qu.:  2.8863  
-        Max.   :  7.5512   Max.   : 20.7375  
-> if (X.imp$error[2] == 1){
-+   cat('  test whether missing class is handled well ... OK\n')
-+ } else {
-+   stop("loosing a class in removing artificially values from data matrix made 'missForest' fail!")
-+ }
-  test whether missing class is handled well ... OK
+> summary(ximp$ximp); ximp$OOBerror
+  Sepal.Length    Sepal.Width     Petal.Length    Petal.Width   
+ Min.   :4.300   Min.   :2.000   Min.   :1.000   Min.   :0.100  
+ 1st Qu.:5.100   1st Qu.:2.800   1st Qu.:1.600   1st Qu.:0.300  
+ Median :5.750   Median :3.000   Median :4.350   Median :1.300  
+ Mean   :5.836   Mean   :3.058   Mean   :3.741   Mean   :1.198  
+ 3rd Qu.:6.400   3rd Qu.:3.300   3rd Qu.:5.079   3rd Qu.:1.800  
+ Max.   :7.900   Max.   :4.400   Max.   :6.900   Max.   :2.500  
+       Species  
+ setosa    :50  
+ versicolor:52  
+ virginica :48  
+                
+                
+                
+     NRMSE        PFC 
+0.13811073 0.05109489 
 > 
 > proc.time()
    user  system elapsed 
-  0.753   0.080   0.964 
+  1.682   0.076   1.896 

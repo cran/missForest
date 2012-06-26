@@ -10,9 +10,12 @@
   relations. It yields an out-of-bag (OOB) imputation error estimate.
 }
 \usage{
-missForest(xmis, maxiter = 10, variablewise = FALSE, decreasing = FALSE,
-           verbose = FALSE, mtry = floor(sqrt(ncol(xmis))), ntree = 100,
-           xtrue = NA)
+missForest(xmis, maxiter = 10, ntree = 100, variablewise = FALSE,
+                       decreasing = FALSE, verbose = FALSE,
+                       mtry = floor(sqrt(ncol(xmis))), replace = TRUE,
+                       classwt = NULL, cutoff = NULL, strata = NULL,
+                       sampsize = NULL, nodesize = NULL, maxnodes = NULL,
+                       xtrue = NA)
 }
 \arguments{
   \item{xmis}{
@@ -22,6 +25,9 @@ missForest(xmis, maxiter = 10, variablewise = FALSE, decreasing = FALSE,
   \item{maxiter}{
     maximum number of iterations to be performed given the stopping criterion
     is not met beforehand.
+  }
+  \item{ntree}{
+    number of trees to grow in each forest.
   }
   \item{variablewise}{
     logical. If 'TRUE' the OOB error is returned for each variable
@@ -43,8 +49,37 @@ missForest(xmis, maxiter = 10, variablewise = FALSE, decreasing = FALSE,
     default value is sqrt(p) for both categorical and continuous
     variables where p is the number of variables in 'xmis'.
   }
-  \item{ntree}{
-    number of trees to grow in each forest.
+  \item{replace}{
+    logical. If 'TRUE' bootstrap sampling (with replacements) is
+    performed else subsampling (without replacements).
+  }
+  \item{classwt}{
+    list of priors of the classes in the categorical variables. This is
+    equivalent to the randomForest argument, however, the user has to
+    set the priors for all categorical variables in the data set (for
+    continuous variables set it 'NULL').
+  }
+  \item{cutoff}{
+    list of class cutoffs for each categorical variable. Same as with
+    'classwt' (for continuous variables set it '1').
+  }
+  \item{strata}{
+    list of (factor) variables used for stratified sampling. Same as
+    with 'classwt' (for continuous variables set it 'NULL').
+  }
+  \item{sampsize}{
+    list of size(s) of sample to draw. This is equivalent to the
+    randomForest argument, however, the user has to set the sizes for
+    all variables.
+  }
+  \item{nodesize}{
+    minimum size of terminal nodes. Has to be a vector of length 2, with
+    the first entry being the number for continuous variables and the
+    second entry the number for categorical variables. Default is 1 for
+    continuous and 5 for categorical variables.
+  }
+  \item{maxnodes}{
+    maximum number of terminal nodes for trees in the forest.
   }
   \item{xtrue}{
     optional. Complete data matrix. This can be supplied to test the
@@ -77,13 +112,15 @@ missForest(xmis, maxiter = 10, variablewise = FALSE, decreasing = FALSE,
   The proportion of falsely classified (PFC) is also computed over the
   categorical missing values only.
 
-  For feasibility reasons 'ntree' and 'mtry' can be chosen smaller. The
-  number of trees can be chosen fairly small since growing many forests
-  (e.g. p forests in each iteration) all observations get predicted a
-  few times. The runtime behaves linear with 'ntree'. In case of
-  high-dimensional data we recommend using a small 'mtry' (e.g. 100
-  should work) to obtain an appropriate imputation result within a
-  feasible amount of time.
+  For feasibility reasons 'ntree', 'mtry', 'nodesize' and 'maxnodes' can
+  be chosen smaller. The number of trees can be chosen fairly small
+  since growing many forests (e.g. p forests in each iteration) all
+  observations get predicted a few times. The runtime behaves linear
+  with 'ntree'. In case of high-dimensional data we recommend using a
+  small 'mtry' (e.g. 100 should work) to obtain an appropriate
+  imputation result within a feasible amount of time.
+
+  See the vignette for further examples on how to use missForest.
 }
 \value{
   \item{ximp}{

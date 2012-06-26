@@ -1,6 +1,6 @@
 
-R version 2.14.1 (2011-12-22)
-Copyright (C) 2011 The R Foundation for Statistical Computing
+R version 2.15.1 (2012-06-22) -- "Roasted Marshmallows"
+Copyright (C) 2012 The R Foundation for Statistical Computing
 ISBN 3-900051-07-0
 Platform: x86_64-unknown-linux-gnu (64-bit)
 
@@ -36,16 +36,18 @@ Type rfNews() to see new features/changes/bug fixes.
   missForest iteration 6 in progress...done!
   missForest iteration 7 in progress...done!
   missForest iteration 8 in progress...done!
+  missForest iteration 9 in progress...done!
+  missForest iteration 10 in progress...done!
 > esoph.imp$OOBerror
     NRMSE       PFC 
-0.5547690 0.6946203 
+0.4695709 0.6771291 
 > 
 > ## maxiter
 > esoph.imp <- missForest(esoph.mis, maxiter = 1)
   missForest iteration 1 in progress...done!
 > esoph.imp$OOBerror
     NRMSE       PFC 
-0.6595460 0.7449367 
+0.6302339 0.7361120 
 > 
 > ## decreasing
 > esoph.imp <- missForest(esoph.mis, decreasing = TRUE)
@@ -53,11 +55,9 @@ Type rfNews() to see new features/changes/bug fixes.
   missForest iteration 2 in progress...done!
   missForest iteration 3 in progress...done!
   missForest iteration 4 in progress...done!
-  missForest iteration 5 in progress...done!
-  missForest iteration 6 in progress...done!
 > esoph.imp$OOBerror
     NRMSE       PFC 
-0.5703529 0.7161559 
+0.4777634 0.6857345 
 > 
 > ## verbose not included due to inconsistent runtimes
 > 
@@ -66,9 +66,11 @@ Type rfNews() to see new features/changes/bug fixes.
   missForest iteration 1 in progress...done!
   missForest iteration 2 in progress...done!
   missForest iteration 3 in progress...done!
+  missForest iteration 4 in progress...done!
+There were 20 warnings (use warnings() to see them)
 > esoph.imp$OOBerror
     NRMSE       PFC 
-0.5824575 0.6819537 
+0.4718710 0.6855152 
 > 
 > ## ntree
 > esoph.imp <- missForest(esoph.mis, ntree = 10)
@@ -77,12 +79,9 @@ Type rfNews() to see new features/changes/bug fixes.
   missForest iteration 3 in progress...done!
   missForest iteration 4 in progress...done!
   missForest iteration 5 in progress...done!
-  missForest iteration 6 in progress...done!
-  missForest iteration 7 in progress...done!
-  missForest iteration 8 in progress...done!
 > esoph.imp$OOBerror
     NRMSE       PFC 
-0.6568324 0.6843845 
+0.5418717 0.7331637 
 > 
 > ## xtrue
 > esoph.imp <- missForest(esoph.mis, xtrue = esoph)
@@ -91,10 +90,14 @@ Type rfNews() to see new features/changes/bug fixes.
   missForest iteration 3 in progress...done!
   missForest iteration 4 in progress...done!
   missForest iteration 5 in progress...done!
+  missForest iteration 6 in progress...done!
 > esoph.imp$OOBerror
     NRMSE       PFC 
-0.5370801 0.7117783 
+0.4757041 0.6853487 
 > esoph.imp$error
     NRMSE       PFC 
-0.6374000 0.7241379 
+0.5956221 0.6551724 
 > 
+> proc.time()
+   user  system elapsed 
+  3.129   0.080   3.342 

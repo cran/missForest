@@ -1,7 +1,8 @@
 %% missForest_1.0.Rnw created on 04.05.11
 %% missForest_1.2.Rnw updated on 20.02.12
+%% missForest_1.3.Rnw updated on 22.06.12
 \documentclass[11pt]{article}
-%\VignetteIndexEntry{missForest_1.2.Rnw}
+%\VignetteIndexEntry{missForest_1.3.Rnw}
 %\VignetteDepends{randomForest}
 \usepackage[english]{babel}
 \usepackage{Sweave,graphicx,amsmath,amssymb,url}
@@ -15,7 +16,7 @@
     
 \title{Using the \texttt{missForest} Package}
 \author{Daniel J. Stekhoven\\stekhoven@stat.math.ethz.ch}
-\date{Friday, 13$^{\textrm{th}}$ of May, 2011\\\small{Update: Version 1.2, 20.02.12}}
+\date{Friday, 13$^{\textrm{th}}$ of May, 2011\\\small{Update: Version 1.3, 26.06.12}}
 \begin{document}
 \maketitle
 \SweaveOpts{engine=R, eps=FALSE, pdf=TRUE, width=5.33, height=3}
@@ -388,6 +389,102 @@ imputation error and computation time. Anyhow, certain data might demand
 different choices either putting a focus on better imputation error or
 better computation time. We leave this delicate choice to the user of these
 certain data sets.
+
+\subsection{Use subsampling instead of bootstrapping by setting
+  \texttt{replace} to \texttt{FALSE}}\label{replace}
+Like in the original paper by \cite{breiman01} \mF uses bootstrap samples
+to grow its trees on. Another possibility would be to use subsamples
+instead. Randomly selected observations are replaced in the data when
+bootstrapping is performed, i.e., a single observation can be selected
+several times. In subsampling these observations are not replaced and thus
+a single observation can only be selected once. If \texttt{replace=FALSE}
+then \texttt{sampsize} (controlling the size of the sample drawn from the
+data to grow a tree) is reduced from $n$ to $0.632n$. This is because
+otherwise there would be no more OOB observations and an error prediction
+would be impossible. The number 0.632 is the expected proportion of
+observations selected when using bootstrapping, i.e., selecting with
+replacements $n$ observations.
+
+<<subsampling,echo=TRUE,eval=TRUE>>=
+set.seed(81)
+iris.imp.sub <- missForest(iris.mis, verbose = TRUE, replace = FALSE)
+iris.imp.sub$OOBerror
+@ 
+
+We can see that there is no substantial improvement compared to
+bootstrapping in the previous example in section \ref{verbose} for the
+\texttt{iris} data. However, in some cases subsampling can be superior to
+bootstrapping. Therefore, if time allows explore both strategies and settle
+for the better performing one.
+
+\subsection{Imbalanced data, stratified sampling and focussed selection
+  (\texttt{classwt}, \texttt{cutoff}, \texttt{strata}, \texttt{sampsize})}\label{stratified}
+From version 1.3 on missForest offers the possibility to pass more
+arguments to the \texttt{randomForest} function at its core. These include:
+\begin{description}
+  \item[\texttt{classwt}] adding priors to the classes in categorical variables;
+  \item[\texttt{cutoff}] setting cutoffs for each class in categorical variables;
+  \item[\texttt{strata}] perform stratified sampling for categorical variables;
+  \item[\texttt{sampsize}] define size of samples drawn from a variable.
+\end{description}
+For each of these arguments the user has to generate a list containing the
+appropriate object for each variable at the corresponding list entry, i.e.,
+the third entry of the list corresponds to the third variable in the data,
+etc. The first three arguments in the above list do only make sense when
+used with categorical variables. However, the generated list has to have an
+entry for each variable - include for continuous variables \texttt{NULL}
+(for \texttt{cutoff} use \texttt{1}). The \texttt{sampsize} argument can be
+used for both types of data. In case of continuous variables a single
+integer and in case of categorical variables a vector of the same length as
+there are classes in the variable.
+
+<<sampsize,echo=TRUE,eval=FALSE>>=
+iris.sampsize <- list(12, 12, 12, 12, c(10, 15, 10))
+iris.imp.sampsize <- missForest(iris.mis, sampsize = iris.sampsize)
+@ 
+
+Note how we set the list entry for \texttt{sampsize} in case of the fifth
+variable \texttt{Species} to a vector with three entries. An example for
+the use of \texttt{cutoff} could be:
+
+<<cutoff,echo=TRUE,eval=FALSE>>=
+iris.cutoff <- list(1, 1, 1, 1, c(0.3, 0.6, 0.1))
+iris.imp.cutoff <- missForest(iris.mis, cutoff = iris.cutoff)
+@ 
+
+we set the cutoff for \texttt{setosa} to 0.3, for \texttt{versicolor} to
+0.6 and for \texttt{virginica} to 0.1 (\emph{not that this would make any sense -
+it is simply to show how the arguments have to be
+generated}). Equivalently, using a \texttt{NULL} instead of 1 for the
+continuous variables the input for \texttt{classwt} looks as:
+
+<<classwt,echo=TRUE,eval=FALSE>>=
+iris.classwt <- list(NULL, NULL, NULL, NULL, c(10, 30, 20))
+iris.imp.classwt <- missForest(iris.mis, classwt = iris.classwt)
+@ 
+
+\subsection{Controlling terminal nodes w.r.t. \texttt{nodesize} and \texttt{maxnodes}}\label{terminal}
+We can control the structural tree growing process two fold:
+\begin{itemize}
+  \item by setting the maximum number of terminal nodes in the tree;
+  \item by defining the minimum number of observations in a terminal node.
+\end{itemize}
+The default setting for the maximum number of nodes is given by the maximum
+possible in the tree growing process, subject to the limits of
+\texttt{nodesize}, which in turn has the default setting of 1 for
+continuous and 5 for categorical variables. The \texttt{maxnodes} argument
+is simply specified by an integer. For \texttt{nodesize} the user needs to
+supply a vector of length 2 where the first entry corresponds to continuous
+and the second entry to categorical variables:
+
+<<terminal, echo=TRUE, eval=FALSE>>=
+iris.imp.term <- missForest(iris.mis, nodesize = c(3, 7))
+@ 
+
+In the above call to \mF we set the number of observations in terminal
+nodes to 3 for continuous variables and 7 for categorical
+variables. Especially, the \texttt{maxnodes} argument can have a strong
+effect on computation time.
 
 \subsection{Testing the appropriateness by supplying \texttt{xtrue}}\label{xtrue}
 Whenever imputing data with real missing values the question arises how
