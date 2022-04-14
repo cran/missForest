@@ -3,7 +3,7 @@
 ##
 ## This R script contains the actual missForest function.
 ##
-## Author: D.Stekhoven, stekhoven@stat.math.ethz.ch
+## Author: D.Stekhoven, stekhoven@nexus.ethz.ch
 ##
 ## Acknowledgement: Steve Weston for input regarding parallel execution (2012)
 ##############################################################################
@@ -38,7 +38,7 @@ missForest <- function(xmis, maxiter = 10, ntree = 100, variablewise = FALSE,
   ## xtrue        = complete data matrix
   ##
   ## ----------------------------------------------------------------------
-  ## Author: Daniel Stekhoven, stekhoven@stat.math.ethz.ch
+  ## Author: Daniel Stekhoven, stekhoven@nexus.ethz.ch
   
   ## stop in case of wrong inputs passed to randomForest
   n <- nrow(xmis)
@@ -74,35 +74,38 @@ missForest <- function(xmis, maxiter = 10, ntree = 100, variablewise = FALSE,
       }
     }
     if (getDoParWorkers() > p){
-      stop('The number of parallel cores should not exceed the number of variables (p=', p, ")")
+      stop("The number of parallel cores should not exceed the number of variables (p=", p, ")")
     }
   }
   
   ## perform initial S.W.A.G. on xmis (mean imputation)
   ximp <- xmis
-  xAttrib <- lapply(xmis, attributes)
   varType <- character(p)
-  for (t.co in 1:p){
-    if (is.null(xAttrib[[t.co]])){
+  for (t.co in 1:p) {
+    if (is.numeric(xmis[[t.co]])) {
       varType[t.co] <- 'numeric'
       ximp[is.na(xmis[,t.co]),t.co] <- mean(xmis[,t.co], na.rm = TRUE)
-    } else {
+      next()
+    } 
+    if (is.factor(xmis[[t.co]])) {
       varType[t.co] <- 'factor'
       ## take the level which is more 'likely' (majority vote)
-      max.level <- max(table(ximp[,t.co]))
+      max.level <- max(table(ximp[[t.co]]))
       ## if there are several classes which are major, sample one at random
-      class.assign <- sample(names(which(max.level == summary(ximp[,t.co]))), 1)
+      class.assign <- sample(names(which(max.level == summary(ximp[[t.co]]))), 1)
       ## it shouldn't be the NA class
-      if (class.assign != "NA's"){
-        ximp[is.na(xmis[,t.co]),t.co] <- class.assign
+      if (class.assign != "NA's") {
+        ximp[is.na(xmis[[t.co]]),t.co] <- class.assign
       } else {
-        while (class.assign == "NA's"){
+        while (class.assign == "NA's") {
           class.assign <- sample(names(which(max.level ==
-                                               summary(ximp[,t.co]))), 1)
+                                               summary(ximp[[t.co]]))), 1)
         }
-        ximp[is.na(xmis[,t.co]),t.co] <- class.assign
+        ximp[is.na(xmis[[t.co]]),t.co] <- class.assign
       }
+      next()
     }
+    stop(sprintf('column %s must be factor or numeric, is %s', names(xmis)[t.co], class(xmis[[t.co]])))
   }
   
   ## extract missingness pattern
@@ -116,8 +119,8 @@ missForest <- function(xmis, maxiter = 10, ntree = 100, variablewise = FALSE,
   ## compute a list of column indices for variable parallelization
   nzsort.j <- sort.j[sort.noNAvar > 0]
   if (parallelize == 'variables') {
-    '%cols%' <- get('%dopar%')
-    idxList <- as.list(isplitVector(nzsort.j, chunkSize=getDoParWorkers()))
+    '%cols%' <- get('%dorng%')
+    idxList <- as.list(isplitVector(nzsort.j, chunkSize = getDoParWorkers()))
   } 
   #   else {
   #     ## force column loop to be sequential
@@ -167,15 +170,17 @@ missForest <- function(xmis, maxiter = 10, ntree = 100, variablewise = FALSE,
       convOld <- convNew
       OOBerrOld <- OOBerr
     }
-    cat("  missForest iteration", iter+1, "in progress...")
+    if (verbose){
+      cat("  missForest iteration", iter+1, "in progress...")
+    }
     t.start <- proc.time()
     ximp.old <- ximp
     
-    if (parallelize=="variables"){
+    if (parallelize == "variables"){
       for (idx in idxList) {
-        results <- foreach(varInd=idx, .packages='randomForest') %cols% {
-          obsi <- !NAloc[,varInd] # which i's are observed
-          misi <- NAloc[,varInd] # which i's are missing
+        results <- foreach(varInd = idx, .packages = 'randomForest') %cols% {
+          obsi <- !NAloc[, varInd] # which i's are observed
+          misi <- NAloc[, varInd] # which i's are missing
           obsY <- ximp[obsi, varInd] # training response
           obsX <- ximp[obsi, seq(1, p)[-varInd]] # training variables
           misX <- ximp[misi, seq(1, p)[-varInd]] # prediction variables
@@ -188,7 +193,7 @@ missForest <- function(xmis, maxiter = 10, ntree = 100, variablewise = FALSE,
               mtry = mtry,
               replace = replace,
               sampsize = if (!is.null(sampsize)) sampsize[[varInd]] else
-                if (replace) nrow(obsX) else ceiling(0.632*nrow(obsX)),
+                if (replace) nrow(obsX) else ceiling(0.632 * nrow(obsX)),
               nodesize = if (!is.null(nodesize)) nodesize[1] else 1,
               maxnodes = if (!is.null(maxnodes)) maxnodes else NULL)
             ## record out-of-bag error
@@ -225,7 +230,7 @@ missForest <- function(xmis, maxiter = 10, ntree = 100, variablewise = FALSE,
               misY <- predict(RF, misX)
             }
           }
-          list(varInd=varInd, misY=misY, oerr=oerr)
+          list(varInd = varInd, misY = misY, oerr = oerr)
         }
         ## update the master copy of the data
         for (res in results) {
@@ -235,7 +240,7 @@ missForest <- function(xmis, maxiter = 10, ntree = 100, variablewise = FALSE,
         }
       }
     } else { # if parallelize != "variables"
-      for (s in 1:p) {
+      for (s in 1 : p) {
         varInd <- sort.j[s]
         if (noNAvar[[varInd]] != 0) {
           obsi <- !NAloc[, varInd]
@@ -247,21 +252,21 @@ missForest <- function(xmis, maxiter = 10, ntree = 100, variablewise = FALSE,
           if (typeY == "numeric") {
             if (parallelize == 'forests') {
               xntree <- NULL
-              RF <- foreach(xntree=idiv(ntree, chunks=getDoParWorkers()),
-                            .combine='combine', .multicombine=TRUE,
-                            .packages='randomForest') %dopar% {
+              RF <- foreach(xntree = idiv(ntree, chunks = getDoParWorkers()),
+                            .combine = 'combine', .multicombine = TRUE,
+                            .packages = 'randomForest') %dorng% {
                               randomForest( x = obsX,
                                             y = obsY,
                                             ntree = xntree,
                                             mtry = mtry,
                                             replace = replace,
                                             sampsize = if (!is.null(sampsize)) sampsize[[varInd]] else
-                                              if (replace) nrow(obsX) else ceiling(0.632*nrow(obsX)),
+                                              if (replace) nrow(obsX) else ceiling(0.632 * nrow(obsX)),
                                             nodesize = if (!is.null(nodesize)) nodesize[1] else 1,
                                             maxnodes = if (!is.null(maxnodes)) maxnodes else NULL)
                             }
               ## record out-of-bag error
-              OOBerror[varInd] <- mean((predict(RF) - RF$y) ^ 2, na.rm=TRUE)
+              OOBerror[varInd] <- mean((predict(RF) - RF$y) ^ 2, na.rm = TRUE)
 #               OOBerror[varInd] <- RF$mse[ntree]
             } else {
               RF <- randomForest( x = obsX,
@@ -270,7 +275,7 @@ missForest <- function(xmis, maxiter = 10, ntree = 100, variablewise = FALSE,
                                   mtry = mtry,
                                   replace = replace,
                                   sampsize = if (!is.null(sampsize)) sampsize[[varInd]] else
-                                    if (replace) nrow(obsX) else ceiling(0.632*nrow(obsX)),
+                                    if (replace) nrow(obsX) else ceiling(0.632 * nrow(obsX)),
                                   nodesize = if (!is.null(nodesize)) nodesize[1] else 1,
                                   maxnodes = if (!is.null(maxnodes)) maxnodes else NULL)
               ## record out-of-bag error
@@ -284,9 +289,9 @@ missForest <- function(xmis, maxiter = 10, ntree = 100, variablewise = FALSE,
               misY <- factor(rep(names(summarY), sum(misi)))
             } else {
               if (parallelize == 'forests') {
-                RF <- foreach(xntree=idiv(ntree, chunks=getDoParWorkers()),
-                              .combine='combine', .multicombine=TRUE,
-                              .packages='randomForest') %dopar% {
+                RF <- foreach(xntree = idiv(ntree, chunks = getDoParWorkers()),
+                              .combine = 'combine', .multicombine = TRUE,
+                              .packages = 'randomForest') %dorng% {
                                 randomForest(
                                   x = obsX,
                                   y = obsY,
@@ -299,7 +304,7 @@ missForest <- function(xmis, maxiter = 10, ntree = 100, variablewise = FALSE,
                                     rep(1/nlevels(obsY), nlevels(obsY)),
                                   strata = if (!is.null(strata)) strata[[varInd]] else obsY,
                                   sampsize = if (!is.null(sampsize)) sampsize[[varInd]] else
-                                    if (replace) nrow(obsX) else ceiling(0.632*nrow(obsX)),
+                                    if (replace) nrow(obsX) else ceiling(0.632 * nrow(obsX)),
                                   nodesize = if (!is.null(nodesize)) nodesize[2] else 5,
                                   maxnodes = if (!is.null(maxnodes)) maxnodes else NULL)
                               }
@@ -316,7 +321,7 @@ missForest <- function(xmis, maxiter = 10, ntree = 100, variablewise = FALSE,
                                    classwt = if (!is.null(classwt)) classwt[[varInd]] else 
                                      rep(1, nlevels(obsY)),
                                    cutoff = if (!is.null(cutoff)) cutoff[[varInd]] else 
-                                     rep(1/nlevels(obsY), nlevels(obsY)),
+                                     rep(1 / nlevels(obsY), nlevels(obsY)),
                                    strata = if (!is.null(strata)) strata[[varInd]] else obsY, 
                                    sampsize = if (!is.null(sampsize)) sampsize[[varInd]] else 
                                      if (replace) nrow(obsX) else ceiling(0.632 * nrow(obsX)), 
@@ -333,19 +338,21 @@ missForest <- function(xmis, maxiter = 10, ntree = 100, variablewise = FALSE,
         }
       }
     }
-    cat('done!\n')
+    if (verbose){
+      cat('done!\n')
+    }
     
-    iter <- iter+1
+    iter <- iter + 1
     Ximp[[iter]] <- ximp
     
     t.co2 <- 1
     ## check the difference between iteration steps
     for (t.type in names(convNew)){
       t.ind <- which(varType == t.type)
-      if (t.type == "numeric"){
-        convNew[t.co2] <- sum((ximp[,t.ind]-ximp.old[,t.ind])^2)/sum(ximp[,t.ind]^2)
+      if (t.type == 'numeric'){
+        convNew[t.co2] <- sum((ximp[, t.ind] - ximp.old[, t.ind])^2) / sum(ximp[, t.ind]^2)
       } else {
-        dist <- sum(as.character(as.matrix(ximp[,t.ind])) != as.character(as.matrix(ximp.old[,t.ind])))
+        dist <- sum(as.character(as.matrix(ximp[, t.ind])) != as.character(as.matrix(ximp.old[, t.ind])))
         convNew[t.co2] <- dist / (n * sum(varType == 'factor'))
       }
       t.co2 <- t.co2 + 1
@@ -353,12 +360,12 @@ missForest <- function(xmis, maxiter = 10, ntree = 100, variablewise = FALSE,
     
     ## compute estimated imputation error
     if (!variablewise){
-      NRMSE <- sqrt(mean(OOBerror[varType=='numeric'])/
-                      var(as.vector(as.matrix(xmis[,varType=='numeric'])),
+      NRMSE <- sqrt(mean(OOBerror[varType == 'numeric'])/
+                      var(as.vector(as.matrix(xmis[, varType == 'numeric'])),
                           na.rm = TRUE))
-      PFC <- mean(OOBerror[varType=='factor'])
-      if (k==1){
-        if (unique(varType)=='numeric'){
+      PFC <- mean(OOBerror[varType == 'factor'])
+      if (k == 1){
+        if (unique(varType) == 'numeric'){
           OOBerr <- NRMSE
           names(OOBerr) <- 'NRMSE'
         } else {
@@ -371,8 +378,8 @@ missForest <- function(xmis, maxiter = 10, ntree = 100, variablewise = FALSE,
       }
     } else {
       OOBerr <- OOBerror
-      names(OOBerr)[varType=='numeric'] <- 'MSE'
-      names(OOBerr)[varType=='factor'] <- 'PFC'
+      names(OOBerr)[varType == 'numeric'] <- 'MSE'
+      names(OOBerr)[varType == 'factor'] <- 'PFC'
     }
     
     if (any(!is.na(xtrue))){
@@ -400,10 +407,10 @@ missForest <- function(xmis, maxiter = 10, ntree = 100, variablewise = FALSE,
     }
   } else {
     if (any(is.na(xtrue))){
-      out <- list(ximp = Ximp[[iter-1]], OOBerror = OOBerrOld)
+      out <- list(ximp = Ximp[[iter - 1]], OOBerror = OOBerrOld)
     } else {
-      out <- list(ximp = Ximp[[iter-1]], OOBerror = OOBerrOld,
-                  error = suppressWarnings(mixError(Ximp[[iter-1]], xmis, xtrue)))
+      out <- list(ximp = Ximp[[iter - 1]], OOBerror = OOBerrOld,
+                  error = suppressWarnings(mixError(Ximp[[iter - 1]], xmis, xtrue)))
     }
   }
   class(out) <- 'missForest'
